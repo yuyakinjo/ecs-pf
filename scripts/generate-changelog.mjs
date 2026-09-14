@@ -30,11 +30,13 @@ function generateChangelog() {
     console.log("✅ CHANGELOG.mdが正常に生成されました");
 
     // 生成されたCHANGELOGの内容を確認
-    if (fs.existsSync(CHANGELOG_FILE)) {
+    try {
       const content = fs.readFileSync(CHANGELOG_FILE, "utf8");
       const lines = content.split("\n").slice(0, 10);
       console.log("\n📄 生成されたCHANGELOG（最初の10行）:");
       console.log(lines.join("\n"));
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
     }
   } catch (error) {
     console.error("❌ CHANGELOG生成中にエラーが発生しました:", error.message);
@@ -52,10 +54,7 @@ function generateChangelog() {
  * 初回のCHANGELOGを作成（ファイルが存在しない場合）
  */
 function createInitialChangelog() {
-  if (!fs.existsSync(CHANGELOG_FILE)) {
-    console.log("📝 初回のCHANGELOG.mdを作成中...");
-
-    const initialContent = `# Changelog
+  const initialContent = `# Changelog
 
 このファイルは[conventional-changelog](https://github.com/conventional-changelog/conventional-changelog)によって自動生成されています。
 
@@ -65,9 +64,17 @@ function createInitialChangelog() {
 
 `;
 
-    fs.writeFileSync(CHANGELOG_FILE, initialContent, "utf8");
-    console.log("✅ 初回のCHANGELOG.mdを作成しました");
+  try {
+    // 存在確認と作成を一度に行い、既存ファイルやシンボリックリンクを上書きしない。
+    fs.writeFileSync(CHANGELOG_FILE, initialContent, {
+      encoding: "utf8",
+      flag: "wx",
+    });
+  } catch (error) {
+    if (error.code === "EEXIST") return;
+    throw error;
   }
+  console.log("✅ 初回のCHANGELOG.mdを作成しました");
 }
 
 /**
