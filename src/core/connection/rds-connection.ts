@@ -84,6 +84,7 @@ export async function handleConnection(
     );
   } else {
     await handleLiveConnection(
+      regionResult.data,
       taskResult.data,
       selectedRDS,
       rdsPortResult.data,
@@ -127,6 +128,7 @@ async function handleDryRun(
  * Handle live connection - accepts branded types directly
  */
 async function handleLiveConnection(
+  region: RegionName,
   taskArn: TaskArn,
   selectedRDS: RDSInstance,
   rdsPort: Port,
@@ -135,6 +137,7 @@ async function handleLiveConnection(
 ): Promise<void> {
   // Pass branded types directly to startSSMSession
   await startSSMSession({
+    region,
     localPort,
     rdsInstance: selectedRDS,
     rdsPort,

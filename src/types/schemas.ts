@@ -94,6 +94,7 @@ export const ReproducibleCommandParamsSchema = object({
 });
 
 export const SSMSessionParamsSchema = object({
+  region: RegionNameSchema,
   taskArn: TaskArnSchema,
   rdsInstance: RDSInstanceSchema,
   rdsPort: PortSchema,

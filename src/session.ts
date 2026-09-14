@@ -3,8 +3,14 @@ import type { ECSExecParams, SSMSessionParams } from "./types.js";
 import { messages } from "./utils/index.js";
 
 export async function startSSMSession(params: SSMSessionParams): Promise<void> {
-  const { taskArn, rdsInstance, rdsPort, localPort, reproducibleCommand } =
-    params;
+  const {
+    region,
+    taskArn,
+    rdsInstance,
+    rdsPort,
+    localPort,
+    reproducibleCommand,
+  } = params;
 
   const parameters = {
     host: [rdsInstance.endpoint],
@@ -14,7 +20,9 @@ export async function startSSMSession(params: SSMSessionParams): Promise<void> {
 
   // Build command string (properly escape JSON parameters)
   const parametersJson = JSON.stringify(parameters);
-  const commandString = `aws ssm start-session --target ${taskArn} --parameters '${parametersJson}' --document-name AWS-StartPortForwardingSessionToRemoteHost`;
+  // --region is required: the selected region may differ from the AWS CLI default,
+  // and a mismatch surfaces as TargetNotConnected
+  const commandString = `aws ssm start-session --region ${String(region)} --target ${taskArn} --parameters '${parametersJson}' --document-name AWS-StartPortForwardingSessionToRemoteHost`;
 
   messages.empty();
   messages.success(
