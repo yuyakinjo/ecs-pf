@@ -41,7 +41,7 @@
    | --------------- | -------------------------------- |
    | **Provider**    | GitHub Actions                   |
    | **Owner**       | GitHubユーザー名またはOrg名      |
-   | **Repository**  | aws-portfoward                   |
+   | **Repository**  | ecs-pf                           |
    | **Workflow**    | release.yml (または publish.yml) |
    | **Environment** | (オプション) 空欄でOK            |
 

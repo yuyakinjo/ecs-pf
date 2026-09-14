@@ -11,7 +11,7 @@
 **設定内容:**
 - Publisher: GitHub Actions
 - Organization: yuyakinjo
-- Repository: aws-portfoward
+- Repository: ecs-pf
 - Workflow: publish.yml
 - Environment: (空欄)
 
@@ -118,7 +118,7 @@ npm側で追加のワークフローを登録：
 **解決策:**
 1. npmのパッケージ設定を確認
    - Organization名: `yuyakinjo`
-   - Repository名: `aws-portfoward`
+   - Repository名: `ecs-pf`
    - Workflow名: `publish.yml`
 2. ワークフローファイル名が正確か確認
 3. `id-token: write`パーミッションがあるか確認
@@ -150,7 +150,7 @@ Trusted Publishingで問題が発生した場合の緊急対応：
 ```yaml
 Publisher: GitHub Actions
 Owner: yuyakinjo
-Repository: aws-portfoward
+Repository: ecs-pf
 Workflow: publish.yml
 Environment: (none)
 ```
