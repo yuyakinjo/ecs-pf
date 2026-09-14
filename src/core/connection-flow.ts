@@ -242,6 +242,7 @@ async function connectToRDSInternal(
   messages.info("Selected task:");
   messages.info(String(selectedTaskArn));
   await startSSMSession({
+    region,
     taskArn,
     rdsInstance: selectedRDS,
     rdsPort,

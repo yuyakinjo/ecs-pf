@@ -52,7 +52,7 @@ export function generateConnectDryRun(
     localPortNumber: [String(localPort)],
   };
   const parametersJson = JSON.stringify(parameters);
-  const awsCommand = `aws ssm start-session --target ${taskArn} --parameters '${parametersJson}' --document-name AWS-StartPortForwardingSessionToRemoteHost`;
+  const awsCommand = `aws ssm start-session --region ${String(region)} --target ${taskArn} --parameters '${parametersJson}' --document-name AWS-StartPortForwardingSessionToRemoteHost`;
 
   // Generate reproducible command
   const reproducibleCommand = generateReproducibleCommand({
