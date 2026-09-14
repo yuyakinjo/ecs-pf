@@ -306,14 +306,18 @@ describe("CLI Commands Integration", () => {
     });
 
     it("should start interactive mode when no region provided", async () => {
-      const { code, stdout } = await runCLI(["enable-exec"], 2000);
+      const { code, stdout, stderr } = await runCLI(["enable-exec"], 2000);
 
-      expect(code === 1 || code === null).toBe(true);
+      // 非対話環境ではプロンプトを出せず usage エラーとして exit 2、
+      // TTY があれば選択画面のままタイムアウトで kill されて null になる
+      expect(code === 1 || code === 2 || code === null).toBe(true);
       // CI環境ではAWS認証がないため、リージョン取得エラーまたはリージョン選択画面のいずれかが表示される
-      const hasRegionSelection = stdout.includes("Select AWS region");
+      // 非対話時のプロンプト不可メッセージは stderr に出るので両方を見る
+      const output = stdout + stderr;
+      const hasRegionSelection = output.includes("Select AWS region");
       const hasRegionError =
-        stdout.includes("AWS Region Error") ||
-        stdout.includes("Failed to get AWS regions");
+        output.includes("AWS Region Error") ||
+        output.includes("Failed to get AWS regions");
       expect(hasRegionSelection || hasRegionError).toBe(true);
     });
 
