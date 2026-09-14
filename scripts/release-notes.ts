@@ -97,11 +97,20 @@ export function parseLog(log: string): Commit[] {
     });
 }
 
-if (import.meta.main) {
+/**
+ * 使い方の誤りは終了コード 2 で知らせる。
+ *
+ * `process.exit` ではなく `process.exitCode` を使うのは、出力の書き出し中に
+ * process を落とさないため (相手がパイプだと途中で切れうる)。合わせて、
+ * 引数で分岐した先で process を落とす形を避けている (CodeQL
+ * `js/user-controlled-bypass`)。
+ */
+function main(): void {
   const version = process.argv[2];
   if (version === undefined) {
     console.error("usage: bun scripts/release-notes.ts <version>");
-    process.exit(2);
+    process.exitCode = 2;
+    return;
   }
 
   // 直前のタグから今回まで。タグが 1 つも無ければ全履歴
@@ -114,3 +123,5 @@ if (import.meta.main) {
   const log = Bun.spawnSync(["git", "log", range, "--format=%B%x00"]);
   console.log(releaseNotes(version, parseLog(log.stdout.toString())));
 }
+
+if (import.meta.main) main();

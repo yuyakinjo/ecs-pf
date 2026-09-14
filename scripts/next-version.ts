@@ -73,7 +73,8 @@ export function calver(now: DateTimeParts): string {
   return `${now.year}.${date}.${time}`;
 }
 
-if (import.meta.main) {
+/** 終了コードの扱いは `release-notes.ts` の main と揃えている */
+async function main(): Promise<void> {
   // UTC で決める。手元と CI で番号がぶれないため
   const version = calver(Temporal.Now.zonedDateTimeISO("UTC"));
 
@@ -85,10 +86,13 @@ if (import.meta.main) {
     );
     if (updated === manifest) {
       console.error("package.json の version を書き換えられなかった");
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
     await Bun.write("package.json", updated);
   }
 
   console.log(version);
 }
+
+if (import.meta.main) await main();
