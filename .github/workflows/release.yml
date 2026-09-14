@@ -1,205 +1,110 @@
-name: Release Package
+name: release
 
-# 手動実行時のみ実行
+# バージョンは日付から決めるので、タグは引き金ではなく**結果**。
+# 出したいときに Actions から手で実行する
 on:
   workflow_dispatch:
     inputs:
-      version_type:
-        description: 'Version increment type'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
+      dry-run:
+        description: publish せず、決まるバージョンとリリースノートだけ確認する
+        type: boolean
+        default: false
 
-# リリース処理に必要な権限
-permissions:
-  contents: write  # git push とリリース作成に必要
-  id-token: write  # npm publish に必要
-
-# 並行実行を防止（複数のリリースが同時実行されないように）
+# 同時に 2 本走ると同じ分の番号で衝突する
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write # バージョンのコミットとタグを push し、Release を作る
+      id-token: write # npm の Trusted Publishing (OIDC) に必要
     steps:
-      # コードをチェックアウト
-      - name: Checkout
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0  # 全履歴を取得（リリースノート生成のため）
+          # リリースノートは「直前のタグから今回まで」を git log で読む
+          # (scripts/release-notes.ts)。既定の浅い clone ではタグも履歴も
+          # 無いので、本文が直近 1 件しか出ない
+          fetch-depth: 0
 
-      # Bun環境のセットアップ
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: '1.3.2'
+          bun-version: '1.4.2'
 
-      # Node.js環境のセットアップ (npm publish用)
-      - name: Setup Node.js for npm publish
-        uses: actions/setup-node@v6
+      # provenance を付けるために npm CLI を使う (ビルドとテストは bun)
+      - uses: actions/setup-node@v6
         with:
           node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
 
-      # 依存関係のインストール
-      - name: Install dependencies
-        run: bun install
+      - run: bun install --frozen-lockfile
 
-      # スクリプトファイルの権限設定
-      - name: Set script permissions
+      # 時刻から決める (CalVer YYYY.MMdd.HHmm、UTC)。何も調べなくてよい
+      - name: decide the version
+        id: version
         run: |
-          chmod +x scripts/*.mjs
-          ls -la scripts/
+          version="$(bun run --silent version:next)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "releasing $version"
 
-      # TypeScriptの型チェック
-      - name: TypeScript type check
-        run: bun run type-check
+      # package.json だけ書き換える。src/version.ts は次の build が作り直す
+      - name: write the version
+        run: bun scripts/next-version.ts --write
 
-      # oxlint / oxfmt でコード品質チェック
-      - name: Code quality check
-        run: bun run ci
+      - run: bun run ci
 
-      # テスト実行
-      - name: Run tests
-        run: bun run test
-
-      # Git設定（npm versionでのコミット用）
-      - name: Configure Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-      # 現在のバージョンを取得
-      - name: Get current version
-        id: current_version
-        run: |
-          CURRENT_VERSION=$(git describe --tags --abbrev=0)
-          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Current version: $CURRENT_VERSION"
-
-      # バージョンアップ（patch, minor, major）
-      - name: Bump version
-        id: version_bump
-        run: |
-          VERSION_TYPE="${{ github.event.inputs.version_type }}"
-          echo "Version type: $VERSION_TYPE"
-
-          # 現在のバージョンを取得
-          CURRENT_VERSION=$(bun -e "console.log(require('./package.json').version)")
-          echo "Current version: $CURRENT_VERSION"
-
-          # バージョンを手動で計算
-          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-          MAJOR=${VERSION_PARTS[0]}
-          MINOR=${VERSION_PARTS[1]}
-          PATCH=${VERSION_PARTS[2]}
-
-          case $VERSION_TYPE in
-            major)
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-              ;;
-            minor)
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              ;;
-            patch)
-              PATCH=$((PATCH + 1))
-              ;;
-          esac
-
-          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          echo "new_version=v$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          echo "New version: v$NEW_VERSION"
-
-          # package.jsonを更新
-          bun -e "
-            const pkg = require('./package.json');
-            pkg.version = '$NEW_VERSION';
-            require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
-          "
-
-          # src/version.tsも更新（存在する場合）
-          if [ -f "src/version.ts" ]; then
-            bun scripts/generate-version.mjs
-          fi
-
-      # CHANGELOGを更新
-      - name: Update CHANGELOG
-        run: |
-          echo "🔍 デバッグ: 現在のディレクトリとファイル確認"
-          pwd
-          ls -la
-          echo "🔍 Bunのバージョン確認"
-          bun --version
-          echo "🔍 Git情報の確認"
-          git log --oneline -10
-          git tag --list | tail -5
-          echo "🔍 conventional-changelogの直接テスト"
-          bunx conventional-changelog --help || echo "conventional-changelog not available"
-          echo "🔍 CHANGELOGスクリプトの実行"
-          bun run changelog:update || {
-            echo "❌ CHANGELOG update failed"
-            echo "🔍 エラー詳細の確認"
-            ls -la scripts/
-            cat scripts/generate-changelog.mjs
-            echo "⚠️ CHANGELOG update failed, continuing..."
-          }
-          echo "✅ CHANGELOG.md update completed"
-
-      # 変更をコミットしてプッシュ
-      - name: Commit and push changes
-        run: |
-          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
-          git add package.json src/version.ts
-          if [ -f "CHANGELOG.md" ]; then
-            git add CHANGELOG.md
-            echo "✅ CHANGELOG.md added to commit"
-          else
-            echo "⚠️ CHANGELOG.md not found, skipping"
-          fi
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git push origin main
-
-      # プロジェクトのビルド
-      - name: Build project
-        run: bun run build
-
-      # ビルド結果の確認
-      - name: Verify build output
-        run: |
-          if [ ! -f "dist/index.js" ]; then
-            echo "❌ Build failed: dist/index.js not found"
-            exit 1
-          fi
-          echo "✅ Build successful: dist/index.js exists"
-
-      # npmに公開（Provenance + Trusted Publishing）
-      - name: Publish to npm with Provenance and Trusted Publishing
-        run: npm publish --provenance --access public
-        # 🔐 Trusted Publishing使用（トークン不要）
-
-      # GitHub Releaseを作成
-      - name: Create GitHub Release
+      # type-check → build → bun test。dist/ もここで出来る
+      - run: bun run test
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
-          CURRENT_VERSION="${{ steps.current_version.outputs.current_version }}"
-          git tag "$NEW_VERSION"
-          git push origin "$NEW_VERSION"
-          gh release create "$NEW_VERSION" \
-            --target main \
-            --title "Release $NEW_VERSION" \
-            --notes-start-tag "$CURRENT_VERSION" \
-            --generate-notes
+          AWS_REGION: us-east-1
+          CI: true
 
+      # 焼き込まれた版が一致するか見る。src/version.ts は生成物なので、
+      # ずれたまま publish できてしまう余地を消しておく
+      - name: check what will be published
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          test -f dist/index.js
+          bun dist/index.js --version | grep -Fqx "ecs-pf $VERSION"
+
+      # CalVer の番号は互換性を伝えられないので、本文で知らせる
+      - name: write the release notes
+        run: |
+          bun scripts/release-notes.ts "${{ steps.version.outputs.version }}" \
+            > "$RUNNER_TEMP/notes.md"
+          {
+            echo "## ${{ steps.version.outputs.version }}"
+            echo
+            cat "$RUNNER_TEMP/notes.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: stop here on a dry run
+        if: inputs.dry-run
+        run: |
+          echo "would publish ${{ steps.version.outputs.version }}" >&2
+          cat "$RUNNER_TEMP/notes.md" >&2
+
+      # Trusted Publishing (OIDC) を使うので NPM_TOKEN は要らない。
+      # npm 側の trusted publisher はこのファイル名で登録してある
+      - name: publish
+        if: ${{ !inputs.dry-run }}
+        run: npm publish --provenance --access public
+
+      # 公開が通ってから記録する。逆順だと、公開できていないのに
+      # バージョンだけ進んだ履歴が残る
+      - name: record the release
+        if: ${{ !inputs.dry-run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json src/version.ts
+          git commit -m "chore: release $VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD --tags
+          gh release create "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md"

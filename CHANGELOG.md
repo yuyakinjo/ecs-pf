@@ -1,3 +1,10 @@
+# Changelog
+
+`v2.2.28` までの記録。ここで凍結している。
+
+これ以降のリリースノートは [GitHub Releases](https://github.com/yuyakinjo/ecs-pf/releases) にある。
+バージョンは semver から CalVer (`YYYY.MMdd.HHmm`) に変わった。詳細は [`docs/RELEASE.md`](docs/RELEASE.md)。
+
 ## [2.2.28](https://github.com/yuyakinjo/aws-portfoward/compare/v2.2.22...v2.2.28) (2026-09-02)
 
 ### ⚠ BREAKING CHANGES

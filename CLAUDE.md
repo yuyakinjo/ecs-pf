@@ -10,7 +10,7 @@ AWS ECS-RDS Port Forwarding CLI (`ecs-pf`) - A TypeScript CLI tool that enables 
 
 ### Build & Run
 ```bash
-# Build the project (compiles TypeScript, generates version, adds shebang)
+# Build the project (regenerates src/version.ts, then bundles via decopin)
 npm run build
 
 # Run the CLI commands locally after building
@@ -44,6 +44,19 @@ npm run lint           # Lint only
 npm run ci             # Run all checks in CI mode
 ```
 
+### Release
+```bash
+# Print the version this moment would produce (CalVer YYYY.MMdd.HHmm, UTC)
+bun run version:next
+
+# Preview the GitHub Release body for that version
+bun run release-notes 2026.914.1830
+```
+
+Releases are manual only: run the **release** workflow from the GitHub Actions tab
+(tick `dry-run` to preview). There is no version input -- the number comes from the
+clock. Never bump the version by hand. See `docs/RELEASE.md`.
+
 ## Architecture
 
 ### Core Flow
@@ -69,9 +82,11 @@ npm run ci             # Run all checks in CI mode
 
 ## Important Considerations
 
-- **Runtime**: Project uses Bun 1.3.2 (managed by mise)
+- **Runtime**: Project uses Bun 1.4.2 (managed by mise)
 - **Module System**: ESM modules (`"type": "module"` in package.json)
-- **Build Process**: Custom build script that handles TypeScript compilation and CLI setup
+- **Build Process**: `bun run generate-version` writes `src/version.ts` from package.json, then `decopin build` bundles `app/` into `dist/index.js`
 - **AWS Permissions**: Requires proper IAM permissions for ECS, RDS, EC2, and SSM
 - **Dependencies**: AWS SDK v3, decopin-cli for CLI/prompts, Chalk for output formatting
 - **Lint/Format**: oxlint (`.oxlintrc.json`) and oxfmt (`.oxfmtrc.json`); Prettier only handles Markdown/YAML
+- **Versioning**: CalVer `YYYY.MMdd.HHmm` (UTC), set by the release workflow. `src/version.ts` is generated -- never edit it. No CHANGELOG.md; history lives in GitHub Releases
+- **Publishing**: npm Trusted Publishing (OIDC) from `release.yml` only. No `NPM_TOKEN`
