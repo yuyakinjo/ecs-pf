@@ -121,7 +121,7 @@ npx ecs-pf enable-exec --dry-run \
 
 ### Development Requirements
 
-- **Bun**: 1.3.2 (managed by [mise](https://mise.jdx.dev/))
+- **Bun**: 1.4.2 (managed by [mise](https://mise.jdx.dev/))
 - To install mise: `curl https://mise.run | sh`
 - After installing mise, run `mise install` in the project directory
 

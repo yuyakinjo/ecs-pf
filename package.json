@@ -9,8 +9,7 @@
   },
   "files": [
     "dist/**/*",
-    "README.md",
-    "CHANGELOG.md"
+    "README.md"
   ],
   "keywords": [
     "aws",
@@ -31,9 +30,8 @@
     "enable-exec": "bun run build && bun dist/index.js enable-exec",
     "build": "bun run generate-version && bunx decopin build",
     "generate-version": "bun scripts/generate-version.mjs",
-    "generate-changelog": "bun scripts/generate-changelog.mjs",
-    "changelog:init": "bun scripts/generate-changelog.mjs init",
-    "changelog:update": "bun scripts/generate-changelog.mjs generate",
+    "version:next": "bun scripts/next-version.ts",
+    "release-notes": "bun scripts/release-notes.ts",
     "start": "bun dist/index.js connect",
     "type-check": "tsc --noEmit",
     "test": "bun run type-check && bun run build && bun test",
@@ -41,7 +39,7 @@
     "test:integration": "bun test test/integration",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "prepublishOnly": "bun run check",
+    "prepublishOnly": "bun run check:dry",
     "format": "oxfmt --ignore-path .gitignore",
     "format:check": "oxfmt --check --ignore-path .gitignore",
     "lint": "oxlint --fix",
@@ -51,9 +49,7 @@
     "ci": "oxfmt --check --ignore-path .gitignore && oxlint --max-warnings=0"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.2",
-    "conventional-changelog-cli": "^5.0.0",
-    "conventional-changelog-conventionalcommits": "^9.0.0",
+    "@types/bun": "^1.4.2",
     "oxfmt": "^0.66.0",
     "oxlint": "^1.81.0",
     "prettier": "^3.6.2"
