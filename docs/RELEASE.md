@@ -57,6 +57,13 @@ npm 側の trusted publisher は次の内容で登録してある。**ワーク�
 publish は `npm publish --provenance --access public`。provenance を付けるために
 ビルドとテストは bun、publish だけ npm CLI を使っている。
 
+`actions/setup-node` は **v7 以降**であること。v6 は `registry-url` を渡すと
+`NODE_AUTH_TOKEN` にダミー値 (`XXXXX-XXXXX-XXXXX-XXXXX`) を export し、それが
+setup-node が書く `.npmrc` の `_authToken` に入る。npm は認証情報があると見て OIDC の
+交換に進まず、publish が 404 (`PUT https://registry.npmjs.org/ecs-pf`) で落ちる。
+provenance の署名だけは通るので、ログは一見うまくいっているように見える。
+v7.0.0 の "Remove dummy NODE_AUTH_TOKEN export" で直っている。
+
 publish するワークフローは `release.yml` の 1 本だけにしてある。以前は
 `release: published` を引き金にした `publish.yml` が併存していて、`release.yml` が
 publish した直後に同じバージョンをもう一度 publish しようとして必ず失敗していた。
