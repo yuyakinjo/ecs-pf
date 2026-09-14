@@ -13,11 +13,21 @@ interface Manifest {
   devDependencies: Record<string, string>;
 }
 
+/**
+ * コメントを外した release.yml。
+ *
+ * コメントで語に触れただけで判定が変わると、`--provenance` を消してコメント
+ * だけ残した、のような書き換えを見逃す。
+ */
 let workflow: string;
 let manifest: Manifest;
 
 beforeAll(async () => {
-  workflow = await Bun.file(".github/workflows/release.yml").text();
+  const source = await Bun.file(".github/workflows/release.yml").text();
+  workflow = source
+    .split("\n")
+    .map((line) => line.replace(/(^|\s)#.*$/, ""))
+    .join("\n");
   manifest = (await Bun.file("package.json").json()) as Manifest;
 });
 
@@ -52,6 +62,12 @@ describe("リリースの手順", () => {
     expect(workflow).toContain("--provenance");
     expect(workflow).not.toContain("NODE_AUTH_TOKEN");
     expect(workflow).not.toMatch(/secrets\.\w*NPM/);
+  });
+
+  it("setup-node は v7 以降", () => {
+    // v6 は registry-url を渡すと NODE_AUTH_TOKEN にダミー値を export し、
+    // npm がそれを認証情報として使って OIDC に進まず publish が 404 になる
+    expect(workflow).toMatch(/actions\/setup-node@v(?:[7-9]|[1-9]\d)/);
   });
 
   it("公開の前に ci とテストを通している", () => {

@@ -34,7 +34,13 @@ jobs:
           bun-version: '1.4.2'
 
       # provenance を付けるために npm CLI を使う (ビルドとテストは bun)
-      - uses: actions/setup-node@v6
+      #
+      # v7 以降であること。v6 は registry-url を渡すと NODE_AUTH_TOKEN に
+      # ダミー値 (XXXXX-XXXXX-XXXXX-XXXXX) を export し、それが .npmrc の
+      # _authToken に入る。npm は認証情報があると見て OIDC の交換に進まず、
+      # publish が 404 になる (実測)。v7.0.0 の "Remove dummy
+      # NODE_AUTH_TOKEN export" で直っている
+      - uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
