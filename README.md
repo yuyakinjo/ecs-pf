@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/ecs-pf)](https://www.npmjs.com/package/ecs-pf)
-[![CI](https://github.com/yuyakinjo/aws-portfoward/actions/workflows/test.yml/badge.svg)](https://github.com/yuyakinjo/aws-portfoward/actions/workflows/test.yml)
+[![CI](https://github.com/yuyakinjo/ecs-pf/actions/workflows/test.yml/badge.svg)](https://github.com/yuyakinjo/ecs-pf/actions/workflows/test.yml)
 [![npm](https://img.shields.io/npm/dt/ecs-pf)](https://www.npmjs.com/package/ecs-pf)
 
 # AWS ECS-RDS Port Forwarding CLI

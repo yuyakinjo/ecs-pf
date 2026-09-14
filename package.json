@@ -23,7 +23,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yuyakinjo/aws-portfoward.git"
+    "url": "git+https://github.com/yuyakinjo/ecs-pf.git"
   },
   "scripts": {
     "connect": "bun run build && bun dist/index.js connect",

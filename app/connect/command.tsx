@@ -1,6 +1,6 @@
 import type { CommandProps } from "decopin-cli";
 import { safeParse } from "valibot";
-import { connectToRDSWithSimpleUI } from "../../src/aws-port-forward.js";
+import { connectToRDSWithSimpleUI } from "../../src/core/simple-ui-flow.js";
 import { ConnectOptionsSchema } from "../../src/types.js";
 import { displayParsingErrors } from "../../src/utils/index.js";
 
