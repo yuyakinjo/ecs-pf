@@ -1,4 +1,4 @@
-import type { CommandProps } from "decopin-cli";
+import type { CmdProps } from "decopin-cli";
 import { safeParse } from "valibot";
 import { connectToRDSWithSimpleUI } from "../../src/core/simple-ui-flow.js";
 import { ConnectOptionsSchema } from "../../src/types.js";
@@ -11,7 +11,7 @@ import { displayParsingErrors } from "../../src/utils/index.js";
 export default async function Command({
   options,
   dryRun,
-}: CommandProps<"connect">) {
+}: CmdProps<"connect">) {
   const parsed = safeParse(ConnectOptionsSchema, {
     region: options.region,
     cluster: options.cluster,

@@ -1,13 +1,10 @@
-import type { CommandProps } from "decopin-cli";
+import type { CmdProps } from "decopin-cli";
 import { safeParse } from "valibot";
 import { execECSTaskWithSimpleUI } from "../../src/aws-exec.js";
 import { ExecOptionsSchema } from "../../src/types.js";
 import { displayParsingErrors } from "../../src/utils/index.js";
 
-export default async function Command({
-  options,
-  dryRun,
-}: CommandProps<"exec">) {
+export default async function Command({ options, dryRun }: CmdProps<"exec">) {
   const parsed = safeParse(ExecOptionsSchema, { ...options, dryRun });
   if (!parsed.success) {
     displayParsingErrors(parsed.issues);
