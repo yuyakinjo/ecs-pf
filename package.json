@@ -63,7 +63,7 @@
     "@aws-sdk/client-rds": "^3.830.0",
     "@aws-sdk/client-ssm": "^3.830.0",
     "chalk": "^6.0.0",
-    "decopin-cli": "2026.902.952",
+    "decopin-cli": "2026.909.1531",
     "fuse.js": "^7.1.0",
     "remeda": "^2.23.1",
     "valibot": "^1.1.0"
